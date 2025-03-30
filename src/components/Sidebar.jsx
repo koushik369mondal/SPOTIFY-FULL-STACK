@@ -20,6 +20,10 @@ const Sidebar = () => {
                         <img className='w-8' src={assets.stack_icon} alt="" />
                         <p className='font-semibold'>Your Library</p>
                     </div>
+                    <div className='flex items-center gap-3'>
+                        <img className='w-5' src={assets.arrow_icon} alt="" />
+                        <img className='w-5' src={assets.plus_icon} alt="" />
+                    </div>
                 </div>
             </div>
         </div>
