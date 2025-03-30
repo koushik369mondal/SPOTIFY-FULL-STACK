@@ -8,7 +8,7 @@ const Player = () => {
                 <img className='w-12' src={songsData[0].image} alt="" />
                 <div>
                     <p>{songsData[0].name}</p>
-                    <p>{songsData[0].desc}</p>
+                    <p>{songsData[0].desc.slice(0,12)}</p>
                 </div>
             </div>
         </div>
