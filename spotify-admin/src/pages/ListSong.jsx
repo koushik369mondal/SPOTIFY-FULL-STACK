@@ -11,10 +11,13 @@ const ListSong = () => {
         try {
 
             const response = await axios.get(`${url}/api/song/list`);
-            console.log(response.data);
+            
+            if(response.data.success) {
+                setData(response.data.songs);
+            }
 
         } catch (error) {
-            
+            toast.error("Error Occurred while fetching songs")
         }
 
     }
@@ -25,7 +28,17 @@ const ListSong = () => {
 
     return (
         <div>
-            
+            <p>All Songs List</p>
+            <br />
+            <div>
+                <div className='sm:grid hidden grid-cols-[0.5fr_1fr_2fr_1fr_0.5fr] items-center gap-2.5 p-3 border border-gray-300 text-sm mr-5 bg-gray-100'>
+                    <b>Image</b>
+                    <b>Name</b>
+                    <b>Album</b>
+                    <b>Duration</b>
+                    <b>Action</b>
+                </div>
+            </div>
         </div>
     )
 }
