@@ -3,4 +3,4 @@
 # spotify-admin/
 
 # Ignore environment variables
-# spotify-backend/.env
+spotify-backend/.env
