@@ -1,5 +1,8 @@
 import React, { useState } from 'react'
 import { assets } from '../assets/assets'
+import axios from 'axios'
+import { url } from '../App';
+import { toast } from 'react-toastify';
 
 const AddSong = () => {
 
@@ -12,7 +15,36 @@ const AddSong = () => {
     const [albumDate, setAlbumDate] = useState([]);
 
     const onSubmitHandler = async (e) => {
+
         e.preventDefault();
+        setLoading(true);
+        try {
+
+            const formData = new FormData();
+
+            formData.append("name", name);
+            formData.append("desc", desc);
+            formData.append("image", image);
+            formData.append("audio", song);
+            formData.append("album", album);
+
+            const response = await axios.post(`${url}/api/song/add`, formData);
+
+            if(response.data.success){
+                toast.success("Song Added");
+                setName("");
+                setDesc("");
+                setImage(false);
+                setSong(false);
+                setAlbum("none");
+            }else{
+                toast.error("Something went wrong");
+            }
+            
+        } catch (error) {
+            toast.error("Error occurred");
+        }
+        setLoading(false);
     }
 
     return  loading ? (
