@@ -20,6 +20,23 @@ const AddSong = () => {
                     </label>
                 </div>
             </div>
+
+            <div className='flex flex-col gap-2.5'>
+                <p>Song name</p>
+                <input className='bg-transparent outline-green-600 border-2 border-gray-400 p-2.5 w-[max(40vw, 250px)]' placeholder='Type Here' type="text" required />
+            </div>
+
+            <div className='flex flex-col gap-2.5'>
+                <p>Song description</p>
+                <input className='bg-transparent outline-green-600 border-2 border-gray-400 p-2.5 w-[max(40vw, 250px)]' placeholder='Type Here' type="text" required />
+            </div>
+
+            <div className='flex flex-col gap-2.5'>
+                <p>Album</p>
+                <select className='bg-transparent outline-green-600 border-2 border-gray-400 p-2.5 w-[150px]'>
+                    <option value="none">None</option>
+                </select>
+            </div>
         </form>
     )
 }
