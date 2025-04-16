@@ -22,6 +22,13 @@ const AddAlbum = () => {
                 <p>Album description</p>
                 <input className='bg-transparent outline-green-600 border-2 border-gray-400 p-2.5 w-[max(40vw,250px)]' type="text" placeholder='Type here' />
             </div>
+
+            <div className='flex flex-col gap-3'>
+                <p>Background Color</p>
+                <input type="color" />
+            </div>
+
+            <button className='text-base bg-black text-white py-2.5 px-14 cursor-pointer' type='submit'>ADD</button>
             
         </form>
     )
