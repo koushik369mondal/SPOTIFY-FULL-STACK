@@ -5,6 +5,11 @@ const AddSong = () => {
 
     const [image, setImage] = useState(false);
     const [song, setSong] = useState(false);
+    const [name, setName] = useState("");
+    const [desc, setDesc] = useState("");
+    const [album, setAlbum] = useState("none");
+    const [loading, setLoading] = useState(false);
+    const [albumDate, setAlbumDate] = useState([]);
 
     return (
         <form className='flex flex-col items-start gap-8 text-gray-600'>
