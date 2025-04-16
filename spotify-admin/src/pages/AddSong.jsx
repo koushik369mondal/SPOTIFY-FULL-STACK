@@ -37,6 +37,8 @@ const AddSong = () => {
                     <option value="none">None</option>
                 </select>
             </div>
+
+            <button type='submit' className='text-base bg-black text-white py-2.5 px-14 cursor-pointer'>ADD</button>
         </form>
     )
 }
