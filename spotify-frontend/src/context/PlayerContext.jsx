@@ -46,11 +46,8 @@ const PlayerContextProvider = (props) => {
     }
 
     const previous = async () => {
-
         songsData.map(async (item, index) => {
-
             if (track._id === item._id && index > 0) {
-
                 await setTrack(songsData[index - 1]);
                 await audioRef.current.play();
                 setPlayStatus(true);
@@ -60,11 +57,14 @@ const PlayerContextProvider = (props) => {
     }
 
     const next = async () => {
-        if (track.id < songsData.length - 1) {
-            await setTrack(songsData[track.id + 1]);
-            await audioRef.current.play();
-            setPlayStatus(true);
-        }
+        songsData.map(async (item, index) => {
+            if (track._id === item._id && index < songsData.length) {
+                await setTrack(songsData[index + 1]);
+                await audioRef.current.play();
+                setPlayStatus(true);
+                
+            }
+        })
     }
 
 const seekSong = async (e) => {
