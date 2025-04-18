@@ -1,5 +1,10 @@
 import React, { useState } from "react";
 import { assets } from "../assets/assets"; // ✅ Correct way
+import { url } from "../App";
+import axios from "axios";
+import { toast } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
+
 
 const AddAlbum = () => {
     const [image, setImage] = useState(false);
@@ -8,12 +13,43 @@ const AddAlbum = () => {
     const [desc, setDesc] = useState("");
     const [loading, setLoading] = useState(false);
 
+    const onSubmitHandler = async (e) => {
+
+        e.preventDefault();
+        setLoading(true);
+
+        try {
+
+            const formData = new FormData();
+            formData.append("name", name);
+            formData.append("desc", desc);
+            formData.append("image", image);
+            formData.append("bgColor", color);
+
+            const response = await axios.post(`${url}/api/album/add`, formData);
+
+            if(response.data.success){
+                toast.success("Album Added");
+                setName("");
+                setDesc("");
+                setImage(false);
+            }
+            else{
+                toast.error("Something went wrong");
+            }
+            
+        } catch (error) {
+            toast.error("Error occurred");
+        }
+        setLoading(false);
+    }
+
     return loading ? (
         <div className="grid place-items-center min-h-[80vh]">
             <div className="w-16 h-16 place-self-center border-4 border-gray-400 border-t-green-800 rounded-full animate-spin"></div>
         </div>
     ) : (
-        <form className="flex flex-col items-start gap-8 text-gray-600">
+        <form onSubmit={onSubmitHandler} className="flex flex-col items-start gap-8 text-gray-600">
             <div className="flex flex-col gap-4">
                 <p>Upload Image</p>
                 <input

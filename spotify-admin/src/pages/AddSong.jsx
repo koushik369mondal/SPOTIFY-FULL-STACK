@@ -3,6 +3,7 @@ import { assets } from '../assets/assets'
 import axios from 'axios'
 import { url } from '../App';
 import { toast } from 'react-toastify';
+import "react-toastify/dist/ReactToastify.css";
 
 const AddSong = () => {
 
