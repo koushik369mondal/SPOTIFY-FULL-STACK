@@ -76,6 +76,3 @@ Pull requests are welcome. For major changes, please open an issue first to disc
 
 - GitHub: [@koushik369mondal](https://github.com/koushik369mondal)
 - LinkedIn: [Kaushik Mandal](https://www.linkedin.com/in/koushik369mondal)
-
----
-```
