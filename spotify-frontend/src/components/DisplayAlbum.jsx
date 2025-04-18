@@ -4,7 +4,7 @@ import { useParams } from 'react-router-dom'
 import { assets } from '../assets/frontend-assets/assets';
 import { PlayerContext } from '../context/PlayerContext';
 
-const DisplayAlbum = () => {
+const DisplayAlbum = ({album}) => {
 
     const { id } = useParams();
     const [albumData, setAlbumData] = useState("");
@@ -44,7 +44,7 @@ const DisplayAlbum = () => {
             </div>
             <hr />
             {
-                songsData.map((item, index) => (
+                songsData.filter((item) => item.album === album.name).map((item, index) => (
                     <div onClick={() => playWithId(item.id)} key={index} className='grid grid-cols-3 sm:grid-cols-4 gap-2 p-2 items-center text-[#a7a7a7] hover:bg-[#ffffff2b] cursor-pointer'>
                         <p className='text-white'>
                             <b className='mr-4 text-[#a7a7a7]'>{index+1}</b>
