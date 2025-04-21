@@ -1,6 +1,6 @@
 .qodo
 # Ignore admin panel folder
-spotify-admin/
+# spotify-admin/
 
 # Ignore environment variables
 spotify-backend/.env
