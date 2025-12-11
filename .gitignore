@@ -78,6 +78,11 @@ Thumbs.db
 tmp/
 temp/
 
+# Upload directories
+uploads/
+*/uploads/
+**/uploads/
+
 # Scripts folder
 backend/scripts/
 scripts/

@@ -7,23 +7,31 @@ import { PlayerContext } from '../context/PlayerContext'
 
 const DisplayHome = () => {
 
-    const {songsData, albumsData} = useContext(PlayerContext);
+    const { songsData, albumsData } = useContext(PlayerContext);
 
     return (
         <>
-        <Navbar/>
-        <div className='mb-4'>
-            <h1 className='my-5 font-bold text-2xl'>Featured Charts</h1>
-            <div className='flex overflow-auto'>
-                {albumsData.map((item, index) => (<AlbumItem key={index} name={item.name} desc={item.desc} id={item._id} image={item.image}/>))}
+            <Navbar />
+            <div className='mb-4'>
+                <h1 className='my-5 font-bold text-2xl'>Featured Charts</h1>
+                <div className='flex overflow-auto'>
+                    {albumsData && albumsData.length > 0 ? (
+                        albumsData.map((item, index) => (<AlbumItem key={index} name={item.name} desc={item.desc} id={item._id} image={item.image} />))
+                    ) : (
+                        <p className='text-gray-500'>No albums available</p>
+                    )}
+                </div>
             </div>
-        </div>
-        <div className='mb-4'>
-            <h1 className='my-5 font-bold text-2xl'>Today's biggest hits</h1>
-            <div className='flex overflow-auto'>
-                {songsData.map((item, index) => (<SongItem key={index} name={item.name} desc={item.desc} id={item._id} image={item.image}/>) )}
+            <div className='mb-4'>
+                <h1 className='my-5 font-bold text-2xl'>Today's biggest hits</h1>
+                <div className='flex overflow-auto'>
+                    {songsData && songsData.length > 0 ? (
+                        songsData.map((item, index) => (<SongItem key={index} name={item.name} desc={item.desc} id={item._id} image={item.image} />))
+                    ) : (
+                        <p className='text-gray-500'>No songs available</p>
+                    )}
+                </div>
             </div>
-        </div>
         </>
     )
 }

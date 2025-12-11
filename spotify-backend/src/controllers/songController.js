@@ -13,11 +13,22 @@ const addSong = async (req, res) => {
         const desc = req.body.desc;
         const album = req.body.album;
 
-        const audioFile = req.files.audio?.[0];
-        const imageFile = req.files.image?.[0];
+        const audioFile = req.files?.audio?.[0];
+        const imageFile = req.files?.image?.[0];
 
         if (!audioFile || !imageFile) {
-            return res.json({ success: false, message: "Audio or image file is missing" });
+            return res.status(400).json({
+                success: false,
+                message: "Audio or image file is missing"
+            });
+        }
+
+        // Validate files exist on disk
+        if (!fs.existsSync(audioFile.path) || !fs.existsSync(imageFile.path)) {
+            return res.status(400).json({
+                success: false,
+                message: "Uploaded files not found"
+            });
         }
 
         // Upload files to Cloudinary
@@ -32,10 +43,14 @@ const addSong = async (req, res) => {
         });
 
         // Clean up uploaded files from local storage
-        fs.unlinkSync(audioFile.path);
-        fs.unlinkSync(imageFile.path);
+        try {
+            if (fs.existsSync(audioFile.path)) fs.unlinkSync(audioFile.path);
+            if (fs.existsSync(imageFile.path)) fs.unlinkSync(imageFile.path);
+        } catch (cleanupError) {
+            console.error('Error cleaning up files:', cleanupError);
+        }
 
-        const duration = `${Math.floor(audioUpload.duration / 60)}:${Math.floor(audioUpload.duration % 60)}`;
+        const duration = `${Math.floor(audioUpload.duration / 60)}:${String(Math.floor(audioUpload.duration % 60)).padStart(2, '0')}`;
 
         const songData = {
             name,
@@ -52,7 +67,23 @@ const addSong = async (req, res) => {
         res.json({ success: true, message: "Song added successfully" });
     } catch (error) {
         console.error("Error adding song:", error);
-        res.json({ success: false, message: "Upload failed" });
+
+        // Clean up files if they exist
+        try {
+            if (req.files?.audio?.[0]?.path && fs.existsSync(req.files.audio[0].path)) {
+                fs.unlinkSync(req.files.audio[0].path);
+            }
+            if (req.files?.image?.[0]?.path && fs.existsSync(req.files.image[0].path)) {
+                fs.unlinkSync(req.files.image[0].path);
+            }
+        } catch (cleanupError) {
+            console.error('Error cleaning up files after error:', cleanupError);
+        }
+
+        res.status(500).json({
+            success: false,
+            message: error.message || "Upload failed. Please try again."
+        });
     }
 };
 

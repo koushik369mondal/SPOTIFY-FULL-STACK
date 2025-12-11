@@ -9,13 +9,14 @@ import albumRouter from "./src/routes/albumRoute.js";
 //app config
 const app = express();
 const port = process.env.PORT || 4000;
-connectDB();
-connectCloudinary();
 
 //middleware
 app.use(express.json());
-app.use(express.urlencoded({ extended: true })); // <-- Add this line
-app.use(cors());
+app.use(express.urlencoded({ extended: true }));
+app.use(cors({
+    origin: ['http://localhost:5173', 'http://localhost:5174'],
+    credentials: true
+}));
 
 //initializing api routes
 app.use("/api/song", songRouter);
@@ -23,4 +24,16 @@ app.use("/api/album", albumRouter);
 
 app.get("/", (req, res) => res.send("API Working"));
 
-app.listen(port, () => console.log(`Server is started on ${port}`));
+// Start server after connecting to DB
+const startServer = async () => {
+    try {
+        await connectDB();
+        connectCloudinary();
+        app.listen(port, () => console.log(`Server is started on ${port}`));
+    } catch (error) {
+        console.error('Failed to start server:', error);
+        process.exit(1);
+    }
+};
+
+startServer();
