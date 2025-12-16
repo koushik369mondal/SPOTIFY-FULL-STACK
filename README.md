@@ -46,24 +46,6 @@ git clone https://github.com/koushik369mondal/SPOTIFY-FULL-STACK.git
 cd SPOTIFY-FULL-STACK
 ```
 
-### 🔧 Backend Setup
-
-```bash
-cd server
-npm install
-```
-Start the backend:
-```bash
-npm run dev
-```
-
-### 🌐 Frontend Setup
-
-```bash
-cd client
-npm install
-npm start
-```
 ---
 
 ## 🤝 Contributing
