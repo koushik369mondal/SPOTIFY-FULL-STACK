@@ -12,6 +12,8 @@ const ListSong = () => {
         desc: '',
         album: ''
     });
+    const [newImage, setNewImage] = useState(null);
+    const [newAudio, setNewAudio] = useState(null);
 
     const fetchSongs = async () => {
 
@@ -56,15 +58,31 @@ const ListSong = () => {
     const cancelEdit = () => {
         setEditingSong(null);
         setEditForm({ name: '', desc: '', album: '' });
+        setNewImage(null);
+        setNewAudio(null);
     }
 
     const updateSong = async (e) => {
         e.preventDefault();
 
         try {
-            const response = await axios.post(`${url}/api/song/update`, {
-                id: editingSong,
-                ...editForm
+            const formData = new FormData();
+            formData.append('id', editingSong);
+            formData.append('name', editForm.name);
+            formData.append('desc', editForm.desc);
+            formData.append('album', editForm.album);
+
+            if (newImage) {
+                formData.append('image', newImage);
+            }
+            if (newAudio) {
+                formData.append('audio', newAudio);
+            }
+
+            const response = await axios.post(`${url}/api/song/update`, formData, {
+                headers: {
+                    'Content-Type': 'multipart/form-data'
+                }
             });
 
             if (response.data.success) {
@@ -162,6 +180,34 @@ const ListSong = () => {
                                     className='w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:border-blue-500'
                                     required
                                 />
+                            </div>
+                            <div className='mb-4'>
+                                <label className='block text-gray-700 text-sm font-bold mb-2'>
+                                    Update Poster Image (Optional)
+                                </label>
+                                <input
+                                    type='file'
+                                    accept='image/*'
+                                    onChange={(e) => setNewImage(e.target.files[0])}
+                                    className='w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:border-blue-500'
+                                />
+                                {newImage && (
+                                    <p className='text-sm text-green-600 mt-1'>New image selected: {newImage.name}</p>
+                                )}
+                            </div>
+                            <div className='mb-6'>
+                                <label className='block text-gray-700 text-sm font-bold mb-2'>
+                                    Update Audio File (Optional)
+                                </label>
+                                <input
+                                    type='file'
+                                    accept='audio/*'
+                                    onChange={(e) => setNewAudio(e.target.files[0])}
+                                    className='w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:border-blue-500'
+                                />
+                                {newAudio && (
+                                    <p className='text-sm text-green-600 mt-1'>New audio selected: {newAudio.name}</p>
+                                )}
                             </div>
                             <div className='flex gap-3 justify-end'>
                                 <button

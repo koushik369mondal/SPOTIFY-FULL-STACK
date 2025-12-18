@@ -123,6 +123,50 @@ const updateSong = async (req, res) => {
         if (desc) updateData.desc = desc;
         if (album) updateData.album = album;
 
+        // Handle image upload if provided
+        if (req.files?.image?.[0]) {
+            const imageFile = req.files.image[0];
+
+            if (fs.existsSync(imageFile.path)) {
+                const imageUpload = await cloudinary.uploader.upload(imageFile.path, {
+                    resource_type: "image",
+                    folder: "song-covers",
+                });
+                updateData.image = imageUpload.secure_url;
+
+                // Clean up uploaded file
+                try {
+                    fs.unlinkSync(imageFile.path);
+                } catch (cleanupError) {
+                    console.error('Error cleaning up image file:', cleanupError);
+                }
+            }
+        }
+
+        // Handle audio upload if provided
+        if (req.files?.audio?.[0]) {
+            const audioFile = req.files.audio[0];
+
+            if (fs.existsSync(audioFile.path)) {
+                const audioUpload = await cloudinary.uploader.upload(audioFile.path, {
+                    resource_type: "video",
+                    folder: "songs",
+                });
+                updateData.file = audioUpload.secure_url;
+
+                // Update duration
+                const duration = `${Math.floor(audioUpload.duration / 60)}:${String(Math.floor(audioUpload.duration % 60)).padStart(2, '0')}`;
+                updateData.duration = duration;
+
+                // Clean up uploaded file
+                try {
+                    fs.unlinkSync(audioFile.path);
+                } catch (cleanupError) {
+                    console.error('Error cleaning up audio file:', cleanupError);
+                }
+            }
+        }
+
         const updatedSong = await songModel.findByIdAndUpdate(
             id,
             updateData,
@@ -143,6 +187,19 @@ const updateSong = async (req, res) => {
         });
     } catch (error) {
         console.error("Error updating song:", error);
+
+        // Clean up files if they exist
+        try {
+            if (req.files?.audio?.[0]?.path && fs.existsSync(req.files.audio[0].path)) {
+                fs.unlinkSync(req.files.audio[0].path);
+            }
+            if (req.files?.image?.[0]?.path && fs.existsSync(req.files.image[0].path)) {
+                fs.unlinkSync(req.files.image[0].path);
+            }
+        } catch (cleanupError) {
+            console.error('Error cleaning up files after error:', cleanupError);
+        }
+
         res.status(500).json({
             success: false,
             message: error.message || "Failed to update song"
