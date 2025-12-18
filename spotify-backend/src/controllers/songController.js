@@ -107,4 +107,47 @@ const removeSong = async (req, res) => {
     }
 };
 
-export { addSong, listSong, removeSong };
+const updateSong = async (req, res) => {
+    try {
+        const { id, name, desc, album } = req.body;
+
+        if (!id) {
+            return res.status(400).json({
+                success: false,
+                message: "Song ID is required"
+            });
+        }
+
+        const updateData = {};
+        if (name) updateData.name = name;
+        if (desc) updateData.desc = desc;
+        if (album) updateData.album = album;
+
+        const updatedSong = await songModel.findByIdAndUpdate(
+            id,
+            updateData,
+            { new: true }
+        );
+
+        if (!updatedSong) {
+            return res.status(404).json({
+                success: false,
+                message: "Song not found"
+            });
+        }
+
+        res.json({
+            success: true,
+            message: "Song updated successfully",
+            song: updatedSong
+        });
+    } catch (error) {
+        console.error("Error updating song:", error);
+        res.status(500).json({
+            success: false,
+            message: error.message || "Failed to update song"
+        });
+    }
+};
+
+export { addSong, listSong, removeSong, updateSong };
