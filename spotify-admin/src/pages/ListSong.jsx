@@ -110,7 +110,12 @@ const ListSong = () => {
                             >
                                 Edit
                             </button>
-                            <p className='cursor-pointer text-red-600 font-bold hover:text-red-800' onClick={() => removeSong(item._id)}>X</p>
+                            <button
+                                className='bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600 transition-colors'
+                                onClick={() => removeSong(item._id)}
+                            >
+                                Delete
+                            </button>
                         </div>
                     )
                 })}
