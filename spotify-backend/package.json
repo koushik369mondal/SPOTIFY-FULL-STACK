@@ -13,7 +13,7 @@
   "license": "ISC",
   "description": "A Spotify clone backend built with Node.js, Express, and MongoDB.",
   "dependencies": {
-    "cloudinary": "^2.6.0",
+    "cloudinary": "^2.7.0",
     "cors": "^2.8.5",
     "dotenv": "^16.4.7",
     "express": "^5.1.0",
