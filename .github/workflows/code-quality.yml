@@ -1,0 +1,53 @@
+name: Code Quality
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main, develop]
+
+jobs:
+  code-quality:
+    name: Code Quality Checks
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20.x"
+
+      - name: Check for console.log in frontend
+        run: |
+          echo "Checking for console.log statements in frontend..."
+          if grep -r "console\.log" spotify-frontend/src --exclude-dir=node_modules; then
+            echo "⚠️  Warning: Found console.log statements in frontend"
+          else
+            echo "✅ No console.log found in frontend"
+          fi
+        continue-on-error: true
+
+      - name: Check for console.log in admin
+        run: |
+          echo "Checking for console.log statements in admin..."
+          if grep -r "console\.log" spotify-admin/src --exclude-dir=node_modules; then
+            echo "⚠️  Warning: Found console.log statements in admin"
+          else
+            echo "✅ No console.log found in admin"
+          fi
+        continue-on-error: true
+
+      - name: Check for TODO comments
+        run: |
+          echo "Checking for TODO comments..."
+          find . -type f \( -name "*.js" -o -name "*.jsx" \) -not -path "*/node_modules/*" -exec grep -Hn "TODO\|FIXME\|HACK" {} \; || echo "✅ No TODO/FIXME/HACK comments found"
+        continue-on-error: true
+
+      - name: Check file sizes
+        run: |
+          echo "Checking for large files..."
+          find . -type f -size +1M -not -path "*/node_modules/*" -not -path "*/.git/*" -exec ls -lh {} \;
+        continue-on-error: true

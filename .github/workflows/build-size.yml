@@ -1,0 +1,65 @@
+name: Build Size Report
+
+on:
+  pull_request:
+    branches: [main, develop]
+    paths:
+      - "spotify-frontend/**"
+      - "spotify-admin/**"
+
+jobs:
+  build-size:
+    name: Check Build Size
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        project: [spotify-frontend, spotify-admin]
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20.x"
+          cache: "npm"
+          cache-dependency-path: ./${{ matrix.project }}/package-lock.json
+
+      - name: Install dependencies
+        working-directory: ./${{ matrix.project }}
+        run: npm ci
+
+      - name: Build project
+        working-directory: ./${{ matrix.project }}
+        run: npm run build
+        env:
+          VITE_BACKEND_URL: http://localhost:4000
+
+      - name: Analyze bundle size
+        working-directory: ./${{ matrix.project }}
+        run: |
+          echo "### 📦 Build Size Report for ${{ matrix.project }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          if [ -d "dist" ]; then
+            echo "**Total Build Size:**" >> $GITHUB_STEP_SUMMARY
+            echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
+            du -sh dist >> $GITHUB_STEP_SUMMARY
+            echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            
+            echo "**Largest Files:**" >> $GITHUB_STEP_SUMMARY
+            echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
+            find dist -type f -exec du -h {} + | sort -rh | head -10 >> $GITHUB_STEP_SUMMARY
+            echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "❌ Build directory not found!" >> $GITHUB_STEP_SUMMARY
+          fi
+
+      - name: Check for large files
+        working-directory: ./${{ matrix.project }}
+        run: |
+          echo "Checking for files larger than 500KB..."
+          find dist -type f -size +500k -exec ls -lh {} \; || echo "✅ No large files found"
