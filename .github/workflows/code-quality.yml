@@ -1,5 +1,7 @@
 name: Code Quality
 
+run-name: ✨ Code quality checks for ${{ github.ref_name }}
+
 on:
   push:
     branches: [main, develop]

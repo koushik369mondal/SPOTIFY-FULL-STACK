@@ -1,5 +1,7 @@
 name: Dependency Update Check
 
+run-name: 📦 Checking for dependency updates
+
 on:
   schedule:
     # Run every Monday at 8 AM UTC

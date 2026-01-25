@@ -1,5 +1,7 @@
 name: Build Size Report
 
+run-name: 📦 Build size analysis for ${{ github.event.pull_request.title || github.ref_name }}
+
 on:
   pull_request:
     branches: [main, develop]

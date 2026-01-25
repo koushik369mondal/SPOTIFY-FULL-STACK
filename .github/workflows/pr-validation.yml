@@ -1,5 +1,7 @@
 name: PR Validation
 
+run-name: ✅ Validating PR - ${{ github.event.pull_request.title }}
+
 on:
   pull_request:
     types: [opened, synchronize, reopened, edited]

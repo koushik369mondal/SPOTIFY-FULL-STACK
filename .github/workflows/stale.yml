@@ -1,5 +1,7 @@
 name: Stale Issue Manager
 
+run-name: 🧹 Managing stale issues and PRs
+
 on:
   schedule:
     # Run every day at 1 AM UTC
