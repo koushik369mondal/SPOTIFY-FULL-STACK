@@ -1,4 +1,4 @@
-name: CI
+name: CI (With Lock Files)
 
 on:
   push:
@@ -21,7 +21,7 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: ${{ matrix.node-version }}
-          # Cache removed - use manual caching for monorepo structure
+          # Note: cache is removed from here since we have multiple projects
 
       # Cache node_modules for all three projects
       - name: Cache node modules

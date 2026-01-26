@@ -1,4 +1,4 @@
-name: CI
+name: CI (No Lock Files)
 
 on:
   push:
@@ -21,37 +21,24 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: ${{ matrix.node-version }}
-          # Cache removed - use manual caching for monorepo structure
-
-      # Cache node_modules for all three projects
-      - name: Cache node modules
-        uses: actions/cache@v4
-        with:
-          path: |
-            spotify-backend/node_modules
-            spotify-frontend/node_modules
-            spotify-admin/node_modules
-          key: ${{ runner.os }}-node-${{ matrix.node-version }}-${{ hashFiles('**/package-lock.json') }}
-          restore-keys: |
-            ${{ runner.os }}-node-${{ matrix.node-version }}-
-            ${{ runner.os }}-node-
+          # No cache configured - works without lock files
 
       - name: Backend
         working-directory: ./spotify-backend
         run: |
-          npm ci
+          npm install
           npm test || true
 
       - name: Frontend
         working-directory: ./spotify-frontend
         run: |
-          npm ci
+          npm install
           npm run build
 
       - name: Admin
         working-directory: ./spotify-admin
         run: |
-          npm ci
+          npm install
           npm run build
 
       - uses: actions/upload-artifact@v4
