@@ -1,0 +1,36 @@
+name: Welcome PR
+
+on:
+  pull_request:
+    types: [opened]
+
+permissions:
+  pull-requests: write
+
+jobs:
+  welcome:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/github-script@v7
+        with:
+          script: |
+            const pr = context.payload.pull_request;
+            const files = await github.rest.pulls.listFiles({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              pull_number: pr.number
+            });
+
+            const fileCount = files.data.length;
+            const additions = files.data.reduce((s, f) => s + f.additions, 0);
+
+            const message = 'Thanks @' + pr.user.login + '! ' +
+              fileCount + ' files changed (+' + additions + '). ' +
+              'A maintainer will review soon.';
+
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: pr.number,
+              body: message
+            });

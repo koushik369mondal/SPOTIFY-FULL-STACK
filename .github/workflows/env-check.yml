@@ -1,0 +1,61 @@
+name: Env Check
+
+on:
+  push:
+    paths: [".env.example"]
+  pull_request:
+    paths: [".env.example"]
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            if (!fs.existsSync('.env.example')) return;
+
+            const content = fs.readFileSync('.env.example', 'utf8');
+            const vars = content.split('\n').filter(l => l.trim() && !l.startsWith('#'));
+
+            const sensitive = /password|secret|key|token/i;
+            const issues = vars.filter(l => sensitive.test(l) && !l.includes('<') && !l.includes('your_'));
+
+            if (issues.length > 0) {
+              core.setFailed('Potential sensitive data: ' + issues.join(', '));
+            }
+
+            if (exampleIssues.length > 0) {
+              summary += '### ⚠️ Potential Sensitive Data in .env.example\n\n';
+              summary += '| Line | Variable | Severity |\n';
+              summary += '|------|----------|----------|\n';
+              exampleIssues.forEach(issue => {
+                summary += `| ${issue.line} | \`${issue.content}\` | ${issue.severity} |\n`;
+              });
+              summary += '\n**🔒 Recommendation**: Use placeholder values like `<YOUR_API_KEY>` or `your_secret_here`\n\n';
+            } else {
+              summary += '### ✅ No Sensitive Data Detected\n\n';
+            }
+
+            // Suggestions
+            summary += '### 💡 Suggestions\n\n';
+            summary += '- Use descriptive placeholder values in .env.example\n';
+            summary += '- Document required variable formats and sources\n';
+            summary += '- Never commit actual .env files to repository\n';
+            summary += '- Consider using environment-specific examples (.env.development.example)\n';
+
+            console.log('\n' + summary);
+
+            // Write to step summary
+            await core.summary.addRaw(summary).write();
+
+      - name: 🔒 Security Recommendations
+        run: |
+          echo "## 🛡️ Security Best Practices" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "- ✅ Always use .env.example with placeholder values" >> $GITHUB_STEP_SUMMARY
+          echo "- ✅ Add .env to .gitignore" >> $GITHUB_STEP_SUMMARY
+          echo "- ✅ Use secrets management for production" >> $GITHUB_STEP_SUMMARY
+          echo "- ✅ Rotate credentials regularly" >> $GITHUB_STEP_SUMMARY

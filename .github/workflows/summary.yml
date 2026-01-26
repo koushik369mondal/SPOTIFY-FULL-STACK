@@ -1,0 +1,142 @@
+name: First Contributor
+
+on:
+  issues:
+    types: [opened]
+  pull_request_target:
+    types: [opened]
+
+permissions:
+  issues: write
+  pull-requests: write
+
+jobs:
+  welcome:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/github-script@v7
+        with:
+          script: |
+            const item = context.payload.issue || context.payload.pull_request;
+            const author = item.user.login;
+
+            const { data: items } = await github.rest.issues.listForRepo({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              creator: author,
+              state: 'all'
+            });
+
+            if (items.length === 1) {
+              await github.rest.issues.addLabels({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: item.number,
+                labels: ['first-time-contributor']
+              });
+              
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: item.number,
+                body: 'Welcome @' + author + '! Thanks for your first contribution!'
+              });
+            }
+            };
+
+            for (const [label, keywords] of Object.entries(keywordLabels)) {
+              if (keywords.some(kw => text.includes(kw))) {
+                labels.push(`🏷️ ${label}`);
+                console.log(`📌 Auto-labeled as: ${label}`);
+              }
+            }
+
+            // Component detection
+            if (isPR) {
+              const { data: files } = await github.rest.pulls.listFiles({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                pull_number: item.number
+              });
+              
+              const components = new Set();
+              files.forEach(file => {
+                if (file.filename.startsWith('spotify-frontend/')) {
+                  components.add('📦 frontend');
+                } else if (file.filename.startsWith('spotify-backend/')) {
+                  components.add('📦 backend');
+                } else if (file.filename.startsWith('spotify-admin/')) {
+                  components.add('📦 admin');
+                }
+                
+                // Detect testing changes
+                if (file.filename.includes('test') || file.filename.includes('spec')) {
+                  components.add('🧪 testing');
+                }
+              });
+              
+              labels.push(...Array.from(components));
+              console.log(`📦 Components detected: ${Array.from(components).join(', ')}`);
+            }
+
+            // Apply labels
+            await github.rest.issues.addLabels({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: item.number,
+              labels: labels
+            });
+
+            console.log(`✅ Applied labels: ${labels.join(', ')}`);
+
+            // Welcome message
+            const welcomeMessage = '## 🎉 Welcome to Spotify Full-Stack, @' + author + '!\n\n' +
+              'Thank you for your first contribution! We\'re excited to have you in our community! 🎵\n\n' +
+              (isPR ? 
+                '### 🚀 Your Pull Request\n\n' +
+                'We appreciate you taking the time to submit a PR! Here\'s what happens next:\n\n' +
+                '1. ✅ **Automated checks** will run to ensure code quality\n' +
+                '2. 👀 **Code review** by a maintainer (typically within 24-48 hours)\n' +
+                '3. 💬 **Feedback** - we may ask questions or suggest changes\n' +
+                '4. 🎊 **Merge** - once approved, your code becomes part of the project!\n\n' +
+                '**💡 Tips for a smooth review:**\n' +
+                '- Keep your changes focused and well-documented\n' +
+                '- Respond to feedback promptly\n' +
+                '- Don\'t hesitate to ask questions!\n\n'
+              : 
+                '### 🐛 Your Issue\n\n' +
+                'Thanks for reporting this! A maintainer will review it soon.\n\n' +
+                '**What you can do while waiting:**\n' +
+                '- ✅ Ensure you\'ve provided all necessary details\n' +
+                '- 🔍 Search for similar existing issues\n' +
+                '- 💬 Feel free to add more context in comments\n\n'
+              ) +
+              '### 📚 Helpful Resources\n\n' +
+              '- 📖 [README](../README.md) - Project overview and setup\n' +
+              '- 🤝 [Contributing Guidelines](../CONTRIBUTING.md) - How to contribute\n' +
+              '- 💬 [Discussions](../../discussions) - General questions and ideas\n' +
+              '- 🐛 [Issue Tracker](../../issues) - Bug reports and feature requests\n\n' +
+              '### 🏷️ Auto-Applied Labels\n\n' +
+              'We\'ve automatically labeled your contribution:\n' +
+              labels.map(l => '- ' + l).join('\n') + '\n\n' +
+              '---\n\n' +
+              '**Questions?** Feel free to ask in the comments. We\'re here to help! 🎵\n\n' +
+              '*Happy coding!* ✨';
+
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: item.number,
+              body: welcomeMessage
+            });
+
+            console.log('✅ Welcome message posted');
+
+            // Create summary
+            core.summary
+              .addHeading('🎉 First-Time Contributor Detected!', 2)
+              .addRaw('\n**User**: @' + author + '\n')
+              .addRaw('**Type**: ' + (isIssue ? 'Issue' : 'Pull Request') + '\n')
+              .addRaw('**Number**: #' + item.number + '\n')
+              .addRaw('**Labels**: ' + labels.join(', ') + '\n')
+              .write();

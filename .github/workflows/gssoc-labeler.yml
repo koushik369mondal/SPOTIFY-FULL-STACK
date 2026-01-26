@@ -1,0 +1,162 @@
+name: Auto Label
+
+on:
+  issues:
+    types: [opened]
+  pull_request:
+    types: [opened]
+
+permissions:
+  issues: write
+  pull-requests: write
+
+jobs:
+  label:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/github-script@v7
+        with:
+          script: |
+            const item = context.payload.issue || context.payload.pull_request;
+            const text = ((item.title || '') + ' ' + (item.body || '')).toLowerCase();
+            const labels = [];
+
+            if (text.length < 20) {
+              labels.push('needs-review');
+            } else if (text.match(/bug|error|crash|fail/)) {
+              labels.push('bug');
+            } else if (text.match(/feature|enhancement|add/)) {
+              labels.push('enhancement');
+            } else if (text.match(/docs|documentation/)) {
+              labels.push('documentation');
+            } else if (text.match(/question|help/)) {
+              labels.push('question');
+            }
+
+            if (text.includes('frontend')) labels.push('frontend');
+            if (text.includes('backend')) labels.push('backend');
+            if (text.includes('admin')) labels.push('admin');
+
+            if (labels.length > 0) {
+              await github.rest.issues.addLabels({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: item.number,
+                labels
+              });
+            }
+              const matches = cat.keywords.filter(kw => text.includes(kw)).length;
+              if (matches > 0) {
+                labels.push(cat.label);
+                score += matches * cat.score;
+                console.log(`✅ Matched category: ${key} (${matches} keywords)`);
+              }
+            }
+
+            // Component detection
+            const components = {
+              frontend: ['frontend', 'ui', 'react', 'component', 'display', 'player'],
+              backend: ['backend', 'server', 'api', 'database', 'mongodb', 'controller'],
+              admin: ['admin', 'dashboard', 'management']
+            };
+
+            for (const [comp, keywords] of Object.entries(components)) {
+              if (keywords.some(kw => text.includes(kw))) {
+                labels.push(`📦 ${comp}`);
+                console.log(`📦 Component detected: ${comp}`);
+              }
+            }
+
+            // PR-specific scoring
+            if (isPR) {
+              const files = await github.rest.pulls.listFiles({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                pull_number: item.number
+              });
+              
+              const fileCount = files.data.length;
+              const additions = files.data.reduce((sum, f) => sum + f.additions, 0);
+              const deletions = files.data.reduce((sum, f) => sum + f.deletions, 0);
+              
+              console.log(`📊 PR Stats: ${fileCount} files, +${additions}/-${deletions}`);
+              
+              // File-based scoring
+              if (fileCount <= 3 && additions <= 50) score += 1;
+              if (fileCount > 10 || additions > 300) score += 3;
+              
+              // PR type detection
+              const prTypes = {
+                fix: title.includes('fix'),
+                feat: title.includes('feat') || title.includes('feature'),
+                refactor: title.includes('refactor'),
+                test: title.includes('test'),
+                docs: title.includes('docs')
+              };
+              
+              for (const [type, matches] of Object.entries(prTypes)) {
+                if (matches) {
+                  labels.push(`🔧 ${type}`);
+                  console.log(`🔧 PR type: ${type}`);
+                }
+              }
+            }
+
+            // Level assignment based on score
+            let level = '';
+            if (score <= 3) {
+              level = '🟢 level1';
+            } else if (score <= 6) {
+              level = '🟡 level2';
+            } else {
+              level = '🔴 level3';
+            }
+
+            labels.push(level);
+            console.log(`📊 Final score: ${score} → ${level}`);
+
+            // First-time contributor
+            const { data: issuesAndPRs } = await github.rest.issues.listForRepo({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              creator: author,
+              state: 'all'
+            });
+
+            if (issuesAndPRs.length <= 1) {
+              labels.push('🎉 first-time-contributor');
+              console.log('🎉 First-time contributor detected!');
+            }
+
+            // Conflict detection for PRs
+            if (isPR && item.mergeable === false) {
+              labels.push('⚠️ conflicts');
+              console.log('⚠️ Merge conflicts detected');
+            }
+
+            // Apply labels
+            if (labels.length > 0) {
+              await github.rest.issues.addLabels({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: item.number,
+                labels: labels
+              });
+              
+              console.log(`\n✅ Applied ${labels.length} labels:`);
+              labels.forEach(l => console.log(`   - ${l}`));
+            }
+
+            // Add comment for high-complexity items
+            if (score > 8) {
+              const comment = `🎯 **High Complexity Detected**\n\nThis ${isIssue ? 'issue' : 'PR'} has been flagged as high complexity (score: ${score}).\n\n` +
+                `${isPR ? '👀 Additional review recommended.\n' : '💭 Consider breaking this into smaller, focused issues.\n'}` +
+                `\nLabels applied: ${labels.join(', ')}`;
+              
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: item.number,
+                body: comment
+              });
+            }

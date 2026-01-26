@@ -1,0 +1,135 @@
+name: Project Auto
+
+on:
+  issues:
+    types: [opened, closed]
+  pull_request:
+    types: [opened, closed]
+
+permissions:
+  issues: write
+  pull-requests: write
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/github-script@v7
+        with:
+          script: |
+            const action = context.payload.action;
+            const num = context.payload.issue?.number || context.payload.pull_request?.number;
+            const status = action === 'opened' ? 'Todo' : 'Done';
+            console.log('#' + num + ' -> ' + status);
+            const action = context.payload.action;
+
+            console.log(`🔍 Processing ${isIssue ? 'issue' : 'PR'} #${item.number}`);
+            console.log(`📌 Action: ${action}`);
+
+            let targetStatus = null;
+
+            // Determine target status based on action
+            if (action === 'opened') {
+              targetStatus = 'Todo';
+              console.log('📝 New item → Todo');
+            } else if (action === 'assigned') {
+              targetStatus = 'In Progress';
+              console.log('👤 Assigned → In Progress');
+            } else if (action === 'closed') {
+              if (isPR && item.merged) {
+                targetStatus = 'Done';
+                console.log('✅ PR merged → Done');
+              } else if (isPR && !item.merged) {
+                targetStatus = 'Cancelled';
+                console.log('❌ PR closed without merge → Cancelled');
+              } else {
+                targetStatus = 'Done';
+                console.log('✅ Issue closed → Done');
+              }
+            } else if (action === 'reopened') {
+              targetStatus = 'In Progress';
+              console.log('🔄 Reopened → In Progress');
+            } else if (action === 'converted_to_draft') {
+              targetStatus = 'In Progress';
+              console.log('🚧 Converted to draft → In Progress');
+            } else if (action === 'ready_for_review') {
+              targetStatus = 'Review';
+              console.log('👀 Ready for review → Review');
+            }
+
+            if (!targetStatus) {
+              console.log('⏭️ No status update needed for this action');
+              return;
+            }
+
+            // Try to update project board (V2)
+            try {
+              // Note: GitHub Projects V2 requires GraphQL API and more complex setup
+              // This is a simplified example - actual implementation would need:
+              // 1. Project ID
+              // 2. Field IDs for status column
+              // 3. GraphQL mutations
+              
+              console.log(`🎯 Target status: ${targetStatus}`);
+              console.log('💡 For full Projects V2 automation, configure project ID and field IDs');
+              
+              // Add comment to track status
+              const statusEmoji = {
+                'Todo': '📝',
+                'In Progress': '🚀',
+                'Review': '👀',
+                'Done': '✅',
+                'Cancelled': '❌'
+              };
+              
+              const comment = `${statusEmoji[targetStatus]} **Project Status**: Moved to **${targetStatus}**`;
+              
+              // Only add comment for significant state changes
+              if (['opened', 'assigned', 'closed', 'ready_for_review'].includes(action)) {
+                await github.rest.issues.createComment({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  issue_number: item.number,
+                  body: comment
+                });
+                console.log('💬 Status comment added');
+              }
+              
+            } catch (error) {
+              console.log(`⚠️ Could not update project board: ${error.message}`);
+              console.log('💡 Make sure project automation is properly configured');
+            }
+
+            // Classic Projects support (if using classic boards)
+            try {
+              // Get project columns
+              const projects = await github.rest.projects.listForRepo({
+                owner: context.repo.owner,
+                repo: context.repo.repo
+              });
+              
+              if (projects.data.length > 0) {
+                console.log(`📊 Found ${projects.data.length} classic project(s)`);
+                
+                // This would require additional logic to:
+                // 1. Find the card for this issue/PR
+                // 2. Determine the target column
+                // 3. Move the card
+                
+                console.log('💡 Classic project automation requires additional configuration');
+              }
+            } catch (error) {
+              console.log('ℹ️ No classic projects or insufficient permissions');
+            }
+
+            console.log('✅ Project automation completed');
+
+      - name: 📊 Summary
+        run: |
+          echo "## 📋 Project Board Update" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "- 🔢 Item: #${{ github.event.issue.number || github.event.pull_request.number }}" >> $GITHUB_STEP_SUMMARY
+          echo "- 📌 Action: ${{ github.event.action }}" >> $GITHUB_STEP_SUMMARY
+          echo "- 🕐 Time: $(date -u +'%Y-%m-%d %H:%M:%S UTC')" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "💡 **Note**: For full Projects V2 automation, configure project and field IDs in repository secrets." >> $GITHUB_STEP_SUMMARY

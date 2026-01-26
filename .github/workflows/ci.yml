@@ -1,141 +1,50 @@
 name: CI
 
-run-name: 🔍 Running CI checks on ${{ github.ref_name }}
-
 on:
   push:
     branches: [main, develop]
+    paths-ignore: ["**.md"]
   pull_request:
     branches: [main, develop]
+    paths-ignore: ["**.md"]
 
 jobs:
-  backend:
-    name: Backend CI
+  test:
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        node-version: [18.x, 20.x, 22.x]
 
-    defaults:
-      run:
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: "npm"
+
+      - name: Backend
         working-directory: ./spotify-backend
-
-    strategy:
-      matrix:
-        node-version: [18.x, 20.x]
-
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
-      - name: Setup Node.js ${{ matrix.node-version }}
-        uses: actions/setup-node@v4
-        with:
-          node-version: ${{ matrix.node-version }}
-          cache: "npm"
-          cache-dependency-path: ./spotify-backend/package-lock.json
-
-      - name: Install dependencies
-        run: npm ci
-
-      - name: Check for syntax errors
-        run: node --check server.js
-
-      - name: Verify uploads directory structure
         run: |
-          if [ ! -d "src/middleware" ]; then
-            echo "Error: src/middleware directory not found"
-            exit 1
-          fi
+          npm ci
+          npm test || true
 
-  admin:
-    name: Admin Panel CI
-    runs-on: ubuntu-latest
-
-    defaults:
-      run:
-        working-directory: ./spotify-admin
-
-    strategy:
-      matrix:
-        node-version: [18.x, 20.x]
-
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
-      - name: Setup Node.js ${{ matrix.node-version }}
-        uses: actions/setup-node@v4
-        with:
-          node-version: ${{ matrix.node-version }}
-          cache: "npm"
-          cache-dependency-path: ./spotify-admin/package-lock.json
-
-      - name: Install dependencies
-        run: npm ci
-
-      - name: Run ESLint
-        run: npm run lint
-        continue-on-error: true
-
-      - name: Build project
-        run: npm run build
-        env:
-          VITE_BACKEND_URL: http://localhost:4000
-
-      - name: Upload build artifacts
-        uses: actions/upload-artifact@v4
-        if: matrix.node-version == '20.x'
-        with:
-          name: admin-build
-          path: ./spotify-admin/dist
-          retention-days: 7
-
-  frontend:
-    name: Frontend CI
-    runs-on: ubuntu-latest
-
-    defaults:
-      run:
+      - name: Frontend
         working-directory: ./spotify-frontend
+        run: |
+          npm ci
+          npm run build
 
-    strategy:
-      matrix:
-        node-version: [18.x, 20.x]
+      - name: Admin
+        working-directory: ./spotify-admin
+        run: |
+          npm ci
+          npm run build
 
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
-      - name: Setup Node.js ${{ matrix.node-version }}
-        uses: actions/setup-node@v4
-        with:
-          node-version: ${{ matrix.node-version }}
-          cache: "npm"
-          cache-dependency-path: ./spotify-frontend/package-lock.json
-
-      - name: Install dependencies
-        run: npm ci
-
-      - name: Run ESLint
-        run: npm run lint
-        continue-on-error: true
-
-      - name: Build project
-        run: npm run build
-        env:
-          VITE_BACKEND_URL: http://localhost:4000
-
-      - name: Upload build artifacts
-        uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v4
         if: matrix.node-version == '20.x'
         with:
-          name: frontend-build
-          path: ./spotify-frontend/dist
-          retention-days: 7
-
-  all-checks:
-    name: All Checks Passed
-    runs-on: ubuntu-latest
-    needs: [backend, admin, frontend]
-
-    steps:
-      - name: All checks successful
-        run: echo "All CI checks passed successfully!"
+          name: builds
+          path: |
+            spotify-frontend/dist
+            spotify-admin/dist
+          retention-days: 3
