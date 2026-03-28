@@ -20,6 +20,11 @@ jobs:
             const item = context.payload.issue || context.payload.pull_request;
             const text = ((item.title || '') + ' ' + (item.body || '')).toLowerCase();
             const labels = [];
+            let score = 0;
+            const isPR = !!context.payload.pull_request;
+            const isIssue = !!context.payload.issue;
+            const title = item.title ? item.title.toLowerCase() : '';
+            const author = item.user.login;
 
             if (text.length < 20) {
               labels.push('needs-review');
@@ -37,21 +42,7 @@ jobs:
             if (text.includes('backend')) labels.push('backend');
             if (text.includes('admin')) labels.push('admin');
 
-            if (labels.length > 0) {
-              await github.rest.issues.addLabels({
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                issue_number: item.number,
-                labels
-              });
-            }
-              const matches = cat.keywords.filter(kw => text.includes(kw)).length;
-              if (matches > 0) {
-                labels.push(cat.label);
-                score += matches * cat.score;
-                console.log(`✅ Matched category: ${key} (${matches} keywords)`);
-              }
-            }
+
 
             // Component detection
             const components = {

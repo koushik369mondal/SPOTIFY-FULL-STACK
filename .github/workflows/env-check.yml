@@ -27,12 +27,13 @@ jobs:
               core.setFailed('Potential sensitive data: ' + issues.join(', '));
             }
 
-            if (exampleIssues.length > 0) {
+            let summary = '';
+            if (issues.length > 0) {
               summary += '### ⚠️ Potential Sensitive Data in .env.example\n\n';
-              summary += '| Line | Variable | Severity |\n';
-              summary += '|------|----------|----------|\n';
-              exampleIssues.forEach(issue => {
-                summary += `| ${issue.line} | \`${issue.content}\` | ${issue.severity} |\n`;
+              summary += '| Variable |\n';
+              summary += '|----------|\n';
+              issues.forEach(issue => {
+                summary += `| \`${issue}\` |\n`;
               });
               summary += '\n**🔒 Recommendation**: Use placeholder values like `<YOUR_API_KEY>` or `your_secret_here`\n\n';
             } else {

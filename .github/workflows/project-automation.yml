@@ -18,10 +18,9 @@ jobs:
         with:
           script: |
             const action = context.payload.action;
-            const num = context.payload.issue?.number || context.payload.pull_request?.number;
-            const status = action === 'opened' ? 'Todo' : 'Done';
-            console.log('#' + num + ' -> ' + status);
-            const action = context.payload.action;
+            const isIssue = !!context.payload.issue;
+            const isPR = !!context.payload.pull_request;
+            const item = context.payload.issue || context.payload.pull_request;
 
             console.log(`🔍 Processing ${isIssue ? 'issue' : 'PR'} #${item.number}`);
             console.log(`📌 Action: ${action}`);

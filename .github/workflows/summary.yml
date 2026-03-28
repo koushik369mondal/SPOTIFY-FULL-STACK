@@ -19,6 +19,9 @@ jobs:
           script: |
             const item = context.payload.issue || context.payload.pull_request;
             const author = item.user.login;
+            const isPR = !!context.payload.pull_request;
+            const isIssue = !!context.payload.issue;
+            const labels = [];
 
             const { data: items } = await github.rest.issues.listForRepo({
               owner: context.repo.owner,
@@ -42,14 +45,7 @@ jobs:
                 body: 'Welcome @' + author + '! Thanks for your first contribution!'
               });
             }
-            };
 
-            for (const [label, keywords] of Object.entries(keywordLabels)) {
-              if (keywords.some(kw => text.includes(kw))) {
-                labels.push(`🏷️ ${label}`);
-                console.log(`📌 Auto-labeled as: ${label}`);
-              }
-            }
 
             // Component detection
             if (isPR) {
