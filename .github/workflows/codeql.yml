@@ -1,11 +1,15 @@
-name: CodeQL
+name: CodeQL Security Analysis
 
 on:
   push:
-    branches: [main]
-    paths: ["**.js", "**.jsx"]
+    branches: [main, master, develop]
+    paths: ["**.js", "**.jsx", "**.json"]
+  pull_request:
+    branches: [main, master, develop]
+    paths: ["**.js", "**.jsx", "**.json"]
   schedule:
     - cron: "0 2 * * 1"
+  workflow_dispatch:
 
 permissions:
   security-events: write
@@ -13,23 +17,21 @@ permissions:
 
 jobs:
   analyze:
+    name: CodeQL Analysis
     runs-on: ubuntu-latest
     timeout-minutes: 30
 
     steps:
-      - uses: actions/checkout@v4
-      - uses: github/codeql-action/init@v2
-        with:
-          languages: javascript
-          queries: security-and-quality
-      - uses: github/codeql-action/autobuild@v2
-      - uses: github/codeql-action/analyze@v2
-        with:
-          category: "/language:${{ matrix.language }}"
+      - name: Checkout repository
+        uses: actions/checkout@v4
 
-      - name: 📊 Summary
-        if: always()
-        run: |
-          echo "🎯 CodeQL analysis completed for ${{ matrix.language }}"
-          echo "📁 Scanned directories: spotify-backend, spotify-frontend, spotify-admin"
-          echo "🔒 Query suite: security-and-quality"
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@v3
+        with:
+          languages: javascript-typescript
+          queries: security-and-quality
+
+      - name: Perform CodeQL Analysis
+        uses: github/codeql-action/analyze@v3
+        with:
+          category: "/language:javascript-typescript"

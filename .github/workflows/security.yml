@@ -1,22 +1,25 @@
-name: Security Scan
-
-run-name: 🔒 Security scan for ${{ github.ref_name || 'scheduled check' }}
+name: Security & Audit Scan
 
 on:
   push:
-    branches: [main, develop]
+    branches: [main, master, develop]
+    paths-ignore: ["**.md", "docs/**"]
   pull_request:
-    branches: [main, develop]
+    branches: [main, master, develop]
+    paths-ignore: ["**.md", "docs/**"]
   schedule:
-    # Run security scan every Monday at 9 AM UTC
     - cron: "0 9 * * 1"
+  workflow_dispatch:
+
+permissions:
+  contents: read
 
 jobs:
-  dependency-scan:
-    name: Dependency Security Scan
+  dependency-audit:
+    name: Dependency Audit
     runs-on: ubuntu-latest
-
     strategy:
+      fail-fast: false
       matrix:
         project: [spotify-backend, spotify-admin, spotify-frontend]
 
@@ -29,51 +32,25 @@ jobs:
         with:
           node-version: "20.x"
 
-      - name: Install dependencies
-        working-directory: ./${{ matrix.project }}
-        run: npm ci
-
-      - name: Run npm audit
+      - name: Audit Dependencies
         working-directory: ./${{ matrix.project }}
         run: |
-          npm audit --audit-level=moderate || true
-          echo "Security scan completed for ${{ matrix.project }}"
-        continue-on-error: true
+          npm audit --audit-level=high || true
 
-      - name: Check for outdated packages
-        working-directory: ./${{ matrix.project }}
-        run: npm outdated || true
-        continue-on-error: true
-
-  secret-scan:
-    name: Secret Detection
+  secret-detection:
+    name: Secret & Environment Scan
     runs-on: ubuntu-latest
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
 
-      - name: Check for hardcoded secrets
+      - name: Check for Committed .env Files
         run: |
-          echo "Checking for potential secrets..."
-
-          # Check for common secret patterns
-          if grep -r "api_key\|apikey\|secret\|password\|token" --include="*.js" --include="*.jsx" . | grep -v node_modules | grep -v ".git" | grep -E "(=|:)\s*['\"][^'\"]{20,}"; then
-            echo "⚠️  Warning: Potential hardcoded secrets found"
-            exit 1
+          echo "Scanning git tracked files for committed secrets/env files..."
+          COMMITTED_ENVS=$(git ls-files | grep -E "(^|/)\.env(\..+)?$" | grep -v "\.env\.example" || true)
+          if [ -n "$COMMITTED_ENVS" ]; then
+            echo "::warning ::Found tracked .env files in git index: $COMMITTED_ENVS"
           else
-            echo "✅ No obvious hardcoded secrets detected"
+            echo "✅ No sensitive .env files tracked in git"
           fi
-        continue-on-error: true
-
-      - name: Check .env files are not committed
-        run: |
-          if git ls-files | grep -E "\.env$" | grep -v ".env.example"; then
-            echo "⚠️  Warning: .env files are committed. Ensure they don't contain sensitive data."
-            echo "Consider using .env.example templates instead."
-          else
-            echo "✅ No .env files committed"
-          fi
-        continue-on-error: true

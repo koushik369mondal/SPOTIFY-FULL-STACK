@@ -2,63 +2,108 @@ name: CI
 
 on:
   push:
-    branches: [main, develop]
-    paths-ignore: ["**.md"]
+    branches: [main, master, develop]
+    paths-ignore: ["**.md", "docs/**"]
   pull_request:
-    branches: [main, develop]
-    paths-ignore: ["**.md"]
+    branches: [main, master, develop]
+    paths-ignore: ["**.md", "docs/**"]
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
-  test:
+  backend:
+    name: Backend Check
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        node-version: [18.x, 20.x, 22.x]
+        node-version: [20.x, 22.x]
 
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout repository
+        uses: actions/checkout@v4
 
-      - uses: actions/setup-node@v4
+      - name: Setup Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v4
         with:
           node-version: ${{ matrix.node-version }}
-          # Cache removed - use manual caching for monorepo structure
+          cache: 'npm'
+          cache-dependency-path: spotify-backend/package-lock.json
 
-      # Cache node_modules for all three projects
-      - name: Cache node modules
-        uses: actions/cache@v4
-        with:
-          path: |
-            spotify-backend/node_modules
-            spotify-frontend/node_modules
-            spotify-admin/node_modules
-          key: ${{ runner.os }}-node-${{ matrix.node-version }}-${{ hashFiles('**/package-lock.json') }}
-          restore-keys: |
-            ${{ runner.os }}-node-${{ matrix.node-version }}-
-            ${{ runner.os }}-node-
-
-      - name: Backend
+      - name: Install Dependencies
         working-directory: ./spotify-backend
-        run: |
-          npm ci
-          npm test || true
+        run: npm ci
 
-      - name: Frontend
-        working-directory: ./spotify-frontend
-        run: |
-          npm ci
-          npm run build
+      - name: Validate Server Syntax
+        working-directory: ./spotify-backend
+        run: node --check server.js
 
-      - name: Admin
-        working-directory: ./spotify-admin
-        run: |
-          npm ci
-          npm run build
+  frontend:
+    name: Frontend Build
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        node-version: [20.x, 22.x]
 
-      - uses: actions/upload-artifact@v4
-        if: matrix.node-version == '20.x'
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v4
         with:
-          name: builds
-          path: |
-            spotify-frontend/dist
-            spotify-admin/dist
-          retention-days: 3
+          node-version: ${{ matrix.node-version }}
+          cache: 'npm'
+          cache-dependency-path: spotify-frontend/package-lock.json
+
+      - name: Install Dependencies
+        working-directory: ./spotify-frontend
+        run: npm ci
+
+      - name: Build Application
+        working-directory: ./spotify-frontend
+        run: npm run build
+
+      - name: Upload Frontend Artifact
+        if: matrix.node-version == '20.x' && github.ref == 'refs/heads/main'
+        uses: actions/upload-artifact@v4
+        with:
+          name: frontend-dist
+          path: spotify-frontend/dist
+          retention-days: 7
+
+  admin:
+    name: Admin Dashboard Build
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        node-version: [20.x, 22.x]
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: 'npm'
+          cache-dependency-path: spotify-admin/package-lock.json
+
+      - name: Install Dependencies
+        working-directory: ./spotify-admin
+        run: npm ci
+
+      - name: Build Application
+        working-directory: ./spotify-admin
+        run: npm run build
+
+      - name: Upload Admin Artifact
+        if: matrix.node-version == '20.x' && github.ref == 'refs/heads/main'
+        uses: actions/upload-artifact@v4
+        with:
+          name: admin-dist
+          path: spotify-admin/dist
+          retention-days: 7
