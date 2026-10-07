@@ -76,14 +76,17 @@ jobs:
             }
 
             // Apply labels
-            await github.rest.issues.addLabels({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              issue_number: item.number,
-              labels: labels
-            });
-
-            console.log(`✅ Applied labels: ${labels.join(', ')}`);
+            if (labels.length > 0) {
+              await github.rest.issues.addLabels({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: item.number,
+                labels: labels
+              });
+              console.log(`✅ Applied labels: ${labels.join(', ')}`);
+            } else {
+              console.log('ℹ️ No component labels to apply');
+            }
 
             // Welcome message
             const welcomeMessage = '## 🎉 Welcome to Spotify Full-Stack, @' + author + '!\n\n' +
